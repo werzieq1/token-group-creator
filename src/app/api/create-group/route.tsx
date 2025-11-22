@@ -25,9 +25,15 @@ const connection = new Connection("https://api.mainnet-beta.solana.com", "confir
 async function getTokenPrice(): Promise<number> {
   try {
     const res = await fetch(`https://price.jup.ag/v6/price?ids=${REQUIRED_TOKEN_MINT}`);
-    const data = await res.json();
-    return data.data[REQUIRED_TOKEN_MINT]?.price || FALLBACK_PRICE; // Fallback if fetch fails
-  } catch {
+    const text = await res.text();
+    if (!res.ok) {
+      console.log('Price fetch failed:', text);
+      return FALLBACK_PRICE;
+    }
+    const data = JSON.parse(text);
+    return data.data[REQUIRED_TOKEN_MINT]?.price || FALLBACK_PRICE;
+  } catch (err) {
+    console.log('Price fetch error:', err.message);
     return FALLBACK_PRICE;
   }
 }
@@ -168,7 +174,7 @@ export async function POST(req: NextRequest) {
     console.log('Disconnecting...');
     await client.disconnect();
 
-    return NextResponse.json({ groupLink: link.link });
+    return NextResponse.json({ groupLink: (link as Api.ChatInviteExported).link });
   } catch (err) {
     console.log('Error:', err.message);
     await client.disconnect();
