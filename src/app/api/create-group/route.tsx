@@ -141,11 +141,12 @@ export async function POST(req: NextRequest) {
         legacyRevokePermanent: true,
       })
     );
+    const groupLink = (link as Api.ChatInviteExported).link;
 
     console.log('Disconnecting...');
     await client.disconnect();
 
-    return NextResponse.json({ groupLink: link.link });
+    return NextResponse.json({ groupLink: groupLink });
   } catch (err) {
     console.log('Error:', err.message);
     await client.disconnect();
