@@ -4,7 +4,6 @@ import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions";
 import { Api } from "telegram/tl";
-import { CustomFile } from "telegram/client/uploads";
 
 // Token CA
 const REQUIRED_TOKEN_MINT = "ARLMnQhWDY8Vy87t3gMq6NRmNyRtqEGozkjfwpeypump";
@@ -75,10 +74,8 @@ export async function POST(req: NextRequest) {
     console.log('Connecting to Telegram...');
     await client.connect();
 
-    console.log('Starting Safeguard bot in private...');
+    console.log('Starting bots in private...');
     await client.sendMessage("safeguard", { message: "/start" });
-
-    console.log('Starting DelugeRaid bot in private...');
     await client.sendMessage("delugeraidbot", { message: "/start" });
 
     console.log('Creating group...');
@@ -89,7 +86,7 @@ export async function POST(req: NextRequest) {
         megagroup: true,
       })
     );
-    const groupEntity = group.chats[0];
+    const groupEntity = (group as Api.Updates).chats[0];
 
     console.log('Adding bots to group...');
     await client.invoke(
@@ -119,7 +116,7 @@ export async function POST(req: NextRequest) {
         channel: groupEntity,
         userId: "safeguard",
         adminRights,
-        rank: "Bot",
+        rank: "Buy Bot",
       })
     );
     await client.invoke(
@@ -127,7 +124,7 @@ export async function POST(req: NextRequest) {
         channel: groupEntity,
         userId: "delugeraidbot",
         adminRights,
-        rank: "Bot",
+        rank: "Raid Bot",
       })
     );
 
