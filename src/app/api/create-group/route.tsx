@@ -4,9 +4,10 @@ import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions";
 import { Api } from "telegram/tl";
+import { CustomFile } from "telegram/client/uploads";
 
 // Token CA
-const REQUIRED_TOKEN_MINT = "ARLMnQhWDY8Vy87t3gMq6NRmNyRtqEGozkjfwpeypump";
+const REQUIRED_TOKEN_MINT = "6PDR3o1KGccEt3m8XfkoRvkBfjkkkwuQz5gtLxGApump";
 const MIN_USD_VALUE = 10;
 
 // Fallback price if API fails
@@ -48,7 +49,12 @@ async function getHolderBalance(wallet: string): Promise<number> {
 }
 
 export async function POST(req: NextRequest) {
-  const { name, ticker, ca, userWallet } = await req.json();
+  const formData = await req.formData();
+  const name = formData.get('name') as string;
+  const ticker = formData.get('ticker') as string;
+  const ca = formData.get('ca') as string;
+  const userWallet = formData.get('userWallet') as string;
+  const image = formData.get('image') as File | null;
 
   if (!userWallet) {
     return NextResponse.json({ error: "Wallet not connected" }, { status: 400 });
@@ -130,6 +136,30 @@ export async function POST(req: NextRequest) {
     await client.sendMessage("safeguard", { message: `/settoken ${ca}` }); // For Safeguard
     await client.sendMessage("delugeraidbot", { message: `/settoken ${ca}` }); // For DelugeRaid
 
+    console.log('Uploading and setting group photo...');
+    if (image) {
+      try {
+        const buffer = Buffer.from(await image.arrayBuffer());
+
+        const uploaded = await client.uploadFile({
+          file: new CustomFile(image.name, image.size, '', buffer),
+          workers: 1,
+        });
+
+        await client.invoke(
+          new Api.channels.EditPhoto({
+            channel: groupEntity,
+            photo: new Api.InputChatUploadedPhoto({ file: uploaded }),
+          })
+        );
+        console.log('Group photo set successfully.');
+      } catch (imageErr) {
+        console.log('Image upload failed:', imageErr.message);
+      }
+    } else {
+      console.log('No image uploaded.');
+    }
+
     console.log('Sending and pinning welcome...');
     const welcome = await client.sendMessage(groupEntity, { message: `Welcome to $${ticker}! Buy: /buy Raid: /raid\nCA: ${ca}` });
     await client.pinMessage(groupEntity, welcome.id);
@@ -141,12 +171,13 @@ export async function POST(req: NextRequest) {
         legacyRevokePermanent: true,
       })
     );
+    const groupLink = (link as { link: string }).link;
 
     console.log('Disconnecting...');
     await client.disconnect();
 
-    return NextResponse.json({ groupLink: (link as { link: string }).link });
-  } catch (err: any) {
+    return NextResponse.json({ groupLink: groupLink });
+  } catch (err) {
     console.log('Error:', err.message);
     await client.disconnect();
     return NextResponse.json({ error: err.message }, { status: 500 });
