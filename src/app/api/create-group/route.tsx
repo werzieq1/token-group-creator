@@ -48,12 +48,7 @@ async function getHolderBalance(wallet: string): Promise<number> {
 }
 
 export async function POST(req: NextRequest) {
-  const formData = await req.formData();
-  const name = formData.get('name') as string;
-  const ticker = formData.get('ticker') as string;
-  const ca = formData.get('ca') as string;
-  const userWallet = formData.get('userWallet') as string;
-  const image = formData.get('image') as File | null;
+  const { name, ticker, ca, userWallet } = await req.json();
 
   if (!userWallet) {
     return NextResponse.json({ error: "Wallet not connected" }, { status: 400 });
@@ -85,8 +80,8 @@ export async function POST(req: NextRequest) {
         about: "Official community",
         megagroup: true,
       })
-    );
-    const groupEntity = (group as Api.Updates).chats[0];
+    ) as Api.Updates;
+    const groupEntity = group.chats[0];
 
     console.log('Adding bots to group...');
     await client.invoke(
@@ -134,23 +129,6 @@ export async function POST(req: NextRequest) {
     console.log('Setting CA for bots...');
     await client.sendMessage("safeguard", { message: `/settoken ${ca}` }); // For Safeguard
     await client.sendMessage("delugeraidbot", { message: `/settoken ${ca}` }); // For DelugeRaid
-
-    console.log('Uploading and setting group photo...');
-    if (image) {
-      const buffer = Buffer.from(await image.arrayBuffer());
-
-      const uploaded = await client.uploadFile({
-        file: new CustomFile(image.name, image.size, '', buffer),
-        workers: 1,
-      });
-
-      await client.invoke(
-        new Api.channels.EditPhoto({
-          channel: groupEntity,
-          photo: new Api.InputChatUploadedPhoto({ file: uploaded }),
-        })
-      );
-    }
 
     console.log('Sending and pinning welcome...');
     const welcome = await client.sendMessage(groupEntity, { message: `Welcome to $${ticker}! Buy: /buy Raid: /raid\nCA: ${ca}` });
