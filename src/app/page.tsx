@@ -88,7 +88,7 @@ export default function Home() {
           <p className="mt-6 text-center text-green-400 break-all">{result}</p>
         )}
       </div>
-      <p className="text-center text-gray-400 mt-6">Token CA: ARLMnQhWDY8Vy87t3gMq6NRmNyRtqEGozkjfwpeypump</p>
+      <p className="text-center text-gray-400 mt-6">Token CA: 6PDR3o1KGccEt3m8XfkoRvkBfjkkkwuQz5gtLxGApump</p>
     </div>
   );
 }
