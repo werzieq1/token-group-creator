@@ -7,7 +7,7 @@ import { Api } from "telegram/tl";
 import { CustomFile } from "telegram/client/uploads";
 
 // Token CA
-const REQUIRED_TOKEN_MINT = "6PDR3o1KGccEt3m8XfkoRvkBfjkkkwuQz5gtLxGApump";
+const REQUIRED_TOKEN_MINT = "7tystWLcVdgF3wL9Z7Rh3L44K5FALvUVwshewMn6pump";
 const MIN_USD_VALUE = 10;
 
 // Fallback price if API fails
@@ -138,26 +138,19 @@ export async function POST(req: NextRequest) {
 
     console.log('Uploading and setting group photo...');
     if (image) {
-      try {
-        const buffer = Buffer.from(await image.arrayBuffer());
+      const buffer = Buffer.from(await image.arrayBuffer());
 
-        const uploaded = await client.uploadFile({
-          file: new CustomFile(image.name, image.size, '', buffer),
-          workers: 1,
-        });
+      const uploaded = await client.uploadFile({
+        file: new CustomFile(image.name, image.size, '', buffer),
+        workers: 1,
+      });
 
-        await client.invoke(
-          new Api.channels.EditPhoto({
-            channel: groupEntity,
-            photo: new Api.InputChatUploadedPhoto({ file: uploaded }),
-          })
-        );
-        console.log('Group photo set successfully.');
-      } catch (imageErr) {
-        console.log('Image upload failed:', imageErr.message);
-      }
-    } else {
-      console.log('No image uploaded.');
+      await client.invoke(
+        new Api.channels.EditPhoto({
+          channel: groupEntity,
+          photo: new Api.InputChatUploadedPhoto({ file: uploaded }),
+        })
+      );
     }
 
     console.log('Sending and pinning welcome...');
@@ -171,12 +164,11 @@ export async function POST(req: NextRequest) {
         legacyRevokePermanent: true,
       })
     );
-    const groupLink = (link as { link: string }).link;
 
     console.log('Disconnecting...');
     await client.disconnect();
 
-    return NextResponse.json({ groupLink: groupLink });
+    return NextResponse.json({ groupLink: link.link });
   } catch (err) {
     console.log('Error:', err.message);
     await client.disconnect();
