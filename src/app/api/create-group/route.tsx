@@ -80,8 +80,8 @@ export async function POST(req: NextRequest) {
         about: "Official community",
         megagroup: true,
       })
-    ) as Api.Updates;
-    const groupEntity = group.chats[0];
+    );
+    const groupEntity = (group as Api.Updates).chats[0];
 
     console.log('Adding bots to group...');
     await client.invoke(
